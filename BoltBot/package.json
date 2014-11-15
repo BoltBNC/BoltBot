@@ -1,0 +1,31 @@
+{
+  "name": "BoltBot",
+  "version": "0.0.1",
+  "description": "A bot for BoltBNC.",
+  "main": "boltbot.js",
+  "scripts": {
+    "test": "node boltbot.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/boltbolt/boltbot.git"
+  },
+  "keywords": [
+    "bot",
+    "irc",
+    "boltbnc",
+    "bouncer"
+  ],
+  "author": "Chaoyi Zha",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/boltbolt/boltbot/issues"
+  },
+  "dependencies": {
+    "irc": "~0.3.7",
+    "jsdom": "~1.2.1",
+    "string": "~2.2.0",
+    "synchronize": "~0.9.8",
+    "fibers": "~1.0.2"
+  }
+}
