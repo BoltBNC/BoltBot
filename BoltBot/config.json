@@ -1,0 +1,8 @@
+{
+    "ircPort": 1234,
+    "ircHost": "someserver.server.com",
+    "ircPassword": "serverpassword1234",
+    "mongoConnect": "mongodb://localhost/databasename",
+    "sgAPIUser": "sendgriduser",
+    "sgAPIPassword": "sendgridpassword"
+}
