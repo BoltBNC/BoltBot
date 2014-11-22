@@ -23,7 +23,7 @@ var S = require('string');
 var sync = require('synchronize');
 var mongoose = require('mongoose');
 var config = require('./config.json');
-var admins = ["fedora/cydrobolt"];
+var admins = config.admins;
 var reserved = "cydrobolt";
 
 var sendgrid  = require('sendgrid')(config.sgAPIUser, config.sgAPIPassword);
@@ -62,7 +62,6 @@ bot.addListener('message#blah', function (from, message) {
 function isAdmin(hostname) {
 	try {
 		var adminStatus = admins.indexOf(hostname) > -1;
-		console.log(adminStatus+hostname);
 		return adminStatus;
 	}
 	catch (err) {
@@ -111,6 +110,54 @@ bot.addListener('message', function (from, to, message, info) {
 			}
 			return;
 		}
+        if ( message.match(/!reject ([a-zA-Z0-9_\-[\]{}^`|]*)/) ) {
+            if (isAdmin(info.host)) {
+                var regEx = /!reject ([a-zA-Z0-9_\-[\]{}^`|]*)/;
+                try {
+                    var desID = message.match(regEx)[1];
+                    try {
+                        Request.remove({ actKey: desID }, function (err) {
+                            if (err) {
+                                bot.notice(from, "There was an error deleting the request from database.");
+                            }
+                            else {
+                                bot.say(to, "User account request rejected. ")
+                            }
+
+                        });
+                    }
+                    catch (err) {
+                        bot.notice(from, "There was an error deleting the request from database.")
+                    }
+
+                }
+                catch (err) {
+                    console.error('Regex error in reject');
+                }
+                return;
+            }
+            else {
+                bot.notice(from, "Only administrators may use this command.");
+            }
+        }
+        if ( message.match(/!delete ([a-zA-Z0-9_\-[\]{}^`|]*)/) ) {
+            if (isAdmin(info.host)) {
+                var regEx = /!delete ([a-zA-Z0-9_\-[\]{}^`|]*)/;
+                try {
+                    var desUser = message.match(regEx)[1];
+                    bot.say('*controlpanel', "DELUSER "+desUser);
+                    bot.say(to, "User removed from BoltBNC");
+
+                }
+                catch (err) {
+                    console.error('Regex error in delete');
+                }
+            }
+            else {
+                bot.notice(from, "Only administrators may use this command.");
+            }
+            return;
+        }
 		if ( message.match(/!approve ([a-zA-Z0-9_\-[\]{}^`|]*?)/) ) {
 			if (isAdmin(info.host)) {
 				var desID = message.match(/!approve ([a-zA-Z0-9]*)/)[1];
@@ -147,6 +194,7 @@ bot.addListener('message', function (from, to, message, info) {
 
 						bot.say('*controlpanel', "ADDUSER "+targUsername+" "+targPassword);
 						bot.say('*controlpanel', "SET DenySetBindHost "+targUsername+" true");
+                        bot.say('*controlpanel', "SET QuitMsg BoltBNC - http://boltbnc.me");
 						sendgrid.send(payload, function(err, json) {
 							if (err) { console.error(err);bot.say(to, from+", an error occured while sending the email. ");return; }
 							console.log(json);
@@ -234,14 +282,50 @@ bot.addListener('message', function (from, to, message, info) {
     }
 });
 bot.addListener('pm', function(nick, message) {
-    console.log('Got private message from %s: %s', nick, message);
+    //console.log('Got private message from %s: %s', nick, message);
+    if ( message == "request" ) {
+        bot.notice(from, "Format: !request <username> <email>. Please wait after you request a bouncer. A staff member will approve your account, and you will receive an email with account information.");
+        return;
+    }
+
+    if ( message.match(/request ([a-zA-Z0-9_\-[\]{}^`|]*?)\s([a-zA-Z0-9-@_]*)/) ) {
+        // Error: User [cydrobolt] already exists!
+        var regEx = /request ([a-zA-Z0-9_\-[\]{}^`|]*?)\s([a-zA-Z0-9-@.\-_]*)/;
+        try {
+            var username = message.match(regEx)[1];
+            if (username == reserved) {
+                bot.notice(from, "Sorry, but this username is not allowed.");
+                return;
+            }
+            var email = message.match(regEx)[2];
+            bot.notice(from, "Your account has been placed on the waiting \
+            list. If it is approved, you will be PMed and emailed your credentials. \
+            Username: "+username+", Email: "+email);
+            var actKey = make_passwd(20, 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890');
+            var newUser = new Request({ username: username, email: email, actKey: actKey});
+            newUser.save(function (err) {
+                if (err) {
+                    bot.notice(from, "An error occured. Please let Admins know in #BoltBNC.");
+                }
+                else {
+                    bot.notice(from, "Success. You will be contacted soon.");
+                }
+            });
+            bot.say(to, "Your account is now pending. Your unique request key: "+actKey);
+
+        }
+        catch (err) {
+            console.error('Regex error in kick');
+        }
+        return;
+    }
 });
 bot.addListener('join', function(channel, who) {
-    console.log('%s has joined %s', who, channel);
+    //console.log('%s has joined %s', who, channel);
 });
 bot.addListener('part', function(channel, who, reason) {
-    console.log('%s has left %s: %s', who, channel, reason);
+    //console.log('%s has left %s: %s', who, channel, reason);
 });
 bot.addListener('kick', function(channel, who, by, reason) {
-    console.log('%s was kicked from %s by %s: %s', who, channel, by, reason);
+    //console.log('%s was kicked from %s by %s: %s', who, channel, by, reason);
 });
