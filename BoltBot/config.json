@@ -4,5 +4,6 @@
     "ircPassword": "serverpassword1234",
     "mongoConnect": "mongodb://localhost/databasename",
     "sgAPIUser": "sendgriduser",
-    "sgAPIPassword": "sendgridpassword"
+    "sgAPIPassword": "sendgridpassword",
+    "admins": ["someorg/someuser"]
 }
